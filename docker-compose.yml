@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    restart: on-failure:3
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data-dev:/data/postgres
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  redis:
+    image: redis:latest
+    restart: on-failure:3
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres-data-dev:

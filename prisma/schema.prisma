@@ -1,0 +1,166 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["windows", "native", "debian-openssl-1.1.x", "darwin-arm64", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  ACTIVE
+  DELETED
+}
+
+enum Chain {
+  ETHEREUM
+  BINANCE
+  INJECTIVE
+  TRON
+}
+
+enum Action {
+  DEPOSIT
+  WITHDRAWAL
+  BUY
+  SELL
+}
+
+model User {
+  userId              BigInt  @unique @map("user_id")
+  languageCode        String? @map("language_code")
+  chain               Chain   @map("chain")
+  publicAddress       String? @map("public_address")
+  encryptedPrivateKey Bytes?  @map("encrypted_private_key")
+
+  referralCode String? @map("referral_code")
+  referredBy   String? @map("referred_by")
+
+  otp             OTP?
+  interactions    Interaction[]
+  positions       Position[]
+  transactions    Transaction[]
+  walletHistories WalletHistory[]
+
+  settings Json? @map("settings")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map(name: "users")
+}
+
+model OTP {
+  otp    BigInt @map("otp")
+  user   User   @relation(fields: [userId], references: [userId])
+  userId BigInt @unique @map("user_id")
+
+  @@map(name: "otp")
+}
+
+model AddressHashMap {
+  address String @unique @map("address")
+  hash    String @unique @map("hash")
+
+  @@map(name: "address_hash_map")
+}
+
+model Interaction {
+  interactionId BigInt @id @default(autoincrement()) @map("interaction_id")
+  user          User   @relation(fields: [userId], references: [userId])
+  userId        BigInt @map("user_id")
+
+  userMessage String @map("user_message")
+  botReply    String @map("bot_reply")
+
+  actionType String   @map("action_type")
+  timeStamp  DateTime @default(now()) @map("time_stamp")
+
+  @@map(name: "interactions")
+}
+
+model Position {
+  positionId BigInt @id @default(autoincrement()) @map("position_id")
+  user       User   @relation(fields: [userId], references: [userId])
+  userId     BigInt @map("user_id")
+
+  token String @map("token")
+  size  Float  @map("size")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map(name: "positions")
+}
+
+model Transaction {
+  txnId        String   @unique @map("txn_id")
+  user         User     @relation(fields: [userId], references: [userId])
+  userId       BigInt   @map("user_id")
+  from         String   @map("from")
+  destination  String   @map("destination")
+  actionType   Action   @map("action_type")
+  timeStamp    DateTime @default(now()) @map("timestamp")
+  tokenAmount  String   @map("token_amount")
+  nativeAmount String   @map("native_amount")
+  price        String   @map("price")
+  chain        Chain    @map("chain")
+  token        Token    @relation(fields: [tokenId], references: [id])
+  tokenId      BigInt   @map("token_id")
+
+  @@map(name: "transactions")
+}
+
+model WalletHistory {
+  historyId     BigInt @id @default(autoincrement()) @map("history_id")
+  user          User   @relation(fields: [userId], references: [userId])
+  userId        BigInt @map("user_id")
+  walletAddress String @map("wallet_address")
+
+  status              Status @default(ACTIVE)
+  encryptedPrivateKey Bytes  @map("encrypted_private_key")
+
+  @@map(name: "wallet_histories")
+}
+
+model Referral {
+  referralId   BigInt   @id @default(autoincrement()) @map("referral_id")
+  referredId   BigInt   @map("referred_id")
+  referredById BigInt   @unique @map("referred_by_id")
+  referredOn   DateTime @default(now()) @map("referred_on")
+
+  @@map(name: "referrals")
+}
+
+model ReferralPayout {
+  referralPayoutId BigInt   @id @default(autoincrement()) @map("referral_payout_id")
+  userId           BigInt   @map("user_id")
+  referredId       BigInt   @map("referred_id")
+  amount           Float    @map("amount")
+  createdOn        DateTime @map("created_on")
+  forMonth         Boolean  @map("for_month")
+  txnId            String   @unique @map("txn_id")
+
+  @@map(name: "referral_payouts")
+}
+
+model Token {
+  id      BigInt @id @default(autoincrement()) @map("token_id")
+  chain   Chain  @map("chain")
+  address String @map("address")
+
+  name      String  @map("name")
+  symbol    String  @map("symbol")
+  decimals  Int     @map("decimals")
+  maxSupply Decimal @map("max_supply") @db.Decimal(40, 0)
+
+  transactions Transaction[]
+
+  @@unique([chain, address])
+  @@map("tokens")
+}

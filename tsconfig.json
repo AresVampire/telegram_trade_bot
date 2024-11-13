@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "esnext"
+    ],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "useUnknownInCatchVariables": true,
+    "strict": true,
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "outDir": "dist",
+    "baseUrl": ".",
+    "allowJs": true,
+    "paths": {
+      "~/*": [
+        "src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "scripts/**/*",
+    "tsup.config.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
